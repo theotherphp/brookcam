@@ -17,7 +17,7 @@ while true; do
   # RTSP input: TCP transport, generate clean timestamps, drop corrupt frames
   # Video input: Reolink E1 Pro main stream (h264Preview_01_main)
   # Audio input: Silent generated audio (YouTube requires an audio track)
-  # Video encoding: h264_videotoolbox (Apple Silicon), 1440p30, 9Mbps CBR
+  # Video encoding: h264_videotoolbox (Apple Silicon), 1440p25, 6Mbps CBR
   # GOP: Keyframe every 2s (YouTube requirement)
   # Audio encoding: AAC stereo 128k
   # Output: FLV over RTMP to YouTube Live
@@ -38,20 +38,19 @@ while true; do
     -map 0:v:0 \
     -map 1:a:0 \
     \
-    -vf "scale=2560:1440:flags=lanczos" \
     -fps_mode cfr \
-    -r 30 \
+    -r 25 \
     \
     -c:v h264_videotoolbox \
     -profile:v high \
     -level 5.1 \
     -pix_fmt yuv420p \
     \
-    -g 60 \
+    -g 50 \
     \
-    -b:v 9000k \
-    -maxrate 9000k \
-    -bufsize 18000k \
+    -b:v 6000k \
+    -maxrate 6000k \
+    -bufsize 12000k \
     \
     -realtime 1 \
     -allow_sw 0 \
