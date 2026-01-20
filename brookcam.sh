@@ -28,8 +28,9 @@ while true; do
     -fflags +genpts+discardcorrupt \
     -use_wallclock_as_timestamps 1 \
     -max_delay 0 \
-    -analyzeduration 1000000 \
-    -probesize 1000000 \
+    -analyzeduration 2000000 \
+    -probesize 2000000 \
+    -thread_queue_size 512 \
     -i "rtsp://$CAMERA_USER:$CAMERA_PASSWORD@$CAMERA_IP:554/h264Preview_01_main" \
     \
     -f lavfi \
