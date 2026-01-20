@@ -1,7 +1,9 @@
-# --- Shell script to upload from Reolink E1 Pro to YouTube Live
+#!/bin/sh
+# Shell script to upload from Reolink E1 Pro to YouTube Live
 
-# --- Secrets are stored in environment variables (not github)
-# --- CAMERA_USER, CAMERA_PASSWORD, CAMERA_IP, YOUTUBE_STREAM_KEY
+# Secrets are stored in environment variables (not github)
+# CAMERA_USER, CAMERA_PASSWORD, CAMERA_IP, YOUTUBE_STREAM_KEY
+
 ENV_PATH="./brookcam.env"
 if [[ ! -f "$ENV_PATH" ]]; then
   echo "env file not found"
@@ -12,8 +14,6 @@ source $ENV_PATH
 while true; do
   echo "Starting stream $(date +"%a %x at %r")"
 
-  # ffmpeg: RTSP camera -> YouTube Live
-  #
   # RTSP input: TCP transport, generate clean timestamps, drop corrupt frames
   # Video input: Reolink E1 Pro main stream (h264Preview_01_main)
   # Audio input: Silent generated audio (YouTube requires an audio track)
@@ -23,6 +23,7 @@ while true; do
   # Output: FLV over RTMP to YouTube Live
 
   ffmpeg \
+    -loglevel error \
     -rtsp_transport tcp \
     -fflags +genpts+discardcorrupt \
     -use_wallclock_as_timestamps 1 \
