@@ -38,6 +38,7 @@ while true; do
     -map 0:v:0 \
     -map 1:a:0 \
     \
+    -vf "scale=2560:1440:flags=lanczos" \
     -fps_mode cfr \
     -r 25 \
     \
