@@ -18,7 +18,7 @@ while true; do
   # Video input: Reolink E1 Pro main stream (h264Preview_01_main)
   # Audio input: Silent generated audio (YouTube requires an audio track)
   # Video encoding: h264_videotoolbox (Apple Silicon), 1440p30, 9Mbps CBR
-  # GOP: Keyframe every 2s, no B-frames (YouTube stability)
+  # GOP: Keyframe every 2s (YouTube requirement)
   # Audio encoding: AAC stereo 128k
   # Output: FLV over RTMP to YouTube Live
 
@@ -38,7 +38,7 @@ while true; do
     -map 1:a:0 \
     \
     -vf "scale=2560:1440:flags=lanczos" \
-    -vsync cfr \
+    -fps_mode cfr \
     -r 30 \
     \
     -c:v h264_videotoolbox \
@@ -47,9 +47,6 @@ while true; do
     -pix_fmt yuv420p \
     \
     -g 60 \
-    -keyint_min 60 \
-    -bf 0 \
-    -sc_threshold 0 \
     \
     -b:v 9000k \
     -maxrate 9000k \
