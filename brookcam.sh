@@ -24,7 +24,7 @@ while true; do
 
   # Restart every 12 hours to avoid YouTube's ~24h connection limit
   gtimeout --signal=SIGINT 43200 ffmpeg \
-    -loglevel error \
+    -loglevel info -nostats \
     -rtsp_transport tcp \
     -fflags +genpts+discardcorrupt \
     -use_wallclock_as_timestamps 1 \
