@@ -23,7 +23,7 @@ while true; do
   # Output: FLV over RTMP to YouTube Live
 
   # Restart every 12 hours to avoid YouTube's ~24h connection limit
-  timeout --signal=SIGINT 43200 ffmpeg \
+  gtimeout --signal=SIGINT 43200 ffmpeg \
     -loglevel error \
     -rtsp_transport tcp \
     -fflags +genpts+discardcorrupt \
