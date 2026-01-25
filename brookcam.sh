@@ -22,8 +22,9 @@ while true; do
   # Audio encoding: AAC stereo 128k
   # Output: FLV over RTMP to YouTube Live
 
-  ffmpeg \
-    -loglevel error \
+  # Restart every 12 hours to avoid YouTube's ~24h connection limit
+  timeout --foreground --signal=SIGINT 43200 ffmpeg \
+    -loglevel info -nostats \
     -rtsp_transport tcp \
     -fflags +genpts+discardcorrupt \
     -use_wallclock_as_timestamps 1 \
