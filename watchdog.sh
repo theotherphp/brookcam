@@ -10,6 +10,7 @@ source $ENV_PATH
 
 # Requires: YOUTUBE_VIDEO_ID, PUSHOVER_USER_KEY, PUSHOVER_APP_TOKEN in env
 
+# 5 minute poll
 POLL_INTERVAL=300
 
 notify() {
