@@ -24,16 +24,34 @@ while true; do
 
   # Restart every 12 hours to avoid YouTube's ~24h connection limit
   # Requires: brew install moreutils (for ts timestamp tool)
+  #
+  # RTSP options explained:
+  #   -rtsp_transport tcp: Use TCP (more reliable than UDP)
+  #   -rtsp_flags prefer_tcp: Prefer TCP for RTP too
+  #   -stimeout 5000000: Socket timeout 5s (detect dead connections)
+  #   -reorder_queue_size: Buffer for out-of-order packets
+  #   -thread_queue_size: Input buffer (larger = more tolerance for bursts)
+  #   -max_delay: Allow buffering to smooth out jitter
+  #   -err_detect ignore_err: Continue past decode errors
+  #   -fflags +discardcorrupt: Drop frames that can't be recovered
+  #
+  # Progress file for watchdog stall detection
+  PROGRESS_FILE="/tmp/brookcam_progress"
+
   timeout --foreground --signal=SIGINT 43200 ffmpeg \
     -loglevel info -nostats \
     -rtsp_transport tcp \
+    -rtsp_flags prefer_tcp \
+    -stimeout 5000000 \
+    -reorder_queue_size 1024 \
     -fflags +genpts+discardcorrupt \
+    -err_detect ignore_err \
     -use_wallclock_as_timestamps 1 \
-    -max_delay 0 \
-    -analyzeduration 2000000 \
-    -probesize 2000000 \
-    -thread_queue_size 512 \
-    -i "rtsp://$CAMERA_USER:$CAMERA_PASSWORD@$CAMERA_IP:554/h264Preview_01_main" \
+    -max_delay 500000 \
+    -analyzeduration 5000000 \
+    -probesize 5000000 \
+    -thread_queue_size 2048 \
+    -i "rtsp://$CAMERA_USER:$CAMERA_PASSWORD@$CAMERA_IP:554/h264Preview_01_sub" \
     \
     -f lavfi \
     -i anullsrc=channel_layout=stereo:sample_rate=44100 \
@@ -65,6 +83,7 @@ while true; do
     -ac 2 \
     -af aresample=async=1 \
     \
+    -progress "$PROGRESS_FILE" \
     -f flv \
     "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_STREAM_KEY" \
     2>&1 | ts '[%Y-%m-%d %H:%M:%S %Z]'
