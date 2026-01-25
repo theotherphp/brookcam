@@ -28,7 +28,7 @@ while true; do
   # RTSP options explained:
   #   -rtsp_transport tcp: Use TCP (more reliable than UDP)
   #   -rtsp_flags prefer_tcp: Prefer TCP for RTP too
-  #   -stimeout 5000000: Socket timeout 5s (detect dead connections)
+  #   -timeout 5000000: Socket timeout 5s (detect dead connections)
   #   -reorder_queue_size: Buffer for out-of-order packets
   #   -thread_queue_size: Input buffer (larger = more tolerance for bursts)
   #   -max_delay: Allow buffering to smooth out jitter
@@ -42,7 +42,7 @@ while true; do
     -loglevel info -nostats \
     -rtsp_transport tcp \
     -rtsp_flags prefer_tcp \
-    -stimeout 5000000 \
+    -timeout 5000000 \
     -reorder_queue_size 1024 \
     -fflags +genpts+discardcorrupt \
     -err_detect ignore_err \
