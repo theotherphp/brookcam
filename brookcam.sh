@@ -23,6 +23,7 @@ while true; do
   # Output: FLV over RTMP to YouTube Live
 
   # Restart every 12 hours to avoid YouTube's ~24h connection limit
+  # Requires: brew install moreutils (for ts timestamp tool)
   timeout --foreground --signal=SIGINT 43200 ffmpeg \
     -loglevel info -nostats \
     -rtsp_transport tcp \
@@ -65,5 +66,6 @@ while true; do
     -af aresample=async=1 \
     \
     -f flv \
-    "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_STREAM_KEY"
+    "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_STREAM_KEY" \
+    2>&1 | ts '[%Y-%m-%d %H:%M:%S %Z]'
 done
