@@ -1,8 +1,0 @@
-{
-  "youtube_api_key": "YOUR_YOUTUBE_API_KEY",
-  "poll_interval_sec": 60,
-  "consecutive_failures": 2,
-  "alert_method": "telegram",
-  "telegram_bot_token": "123456:ABCDEF",
-  "telegram_chat_id": "987654321"
-}
