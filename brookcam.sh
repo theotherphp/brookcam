@@ -11,34 +11,47 @@ if [[ ! -f "$ENV_PATH" ]]; then
 fi
 source $ENV_PATH
 
-while true; do
-  echo "Starting stream $(date +"%a %x at %r")"
+# Hour gate: only run 6 AM - 8 PM, exit 0 outside so launchd won't restart
+HOUR=$(date +%-H)
+if [[ $HOUR -ge 20 || $HOUR -lt 6 ]]; then
+  echo "Outside operating hours (hour=$HOUR), exiting"
+  exit 0
+fi
 
-  # RTSP input: TCP transport, generate clean timestamps, drop corrupt frames
-  # Video input: Reolink E1 Pro main stream (h264Preview_01_main)
-  # Audio input: Silent generated audio (YouTube requires an audio track)
-  # Video encoding: h264_videotoolbox (Apple Silicon), 1440p20, 9Mbps CBR
-  # GOP: Keyframe every 2s (YouTube requirement)
-  # Audio encoding: AAC stereo 128k
-  # Output: FLV over RTMP to YouTube Live
+# Calculate seconds until 8 PM for dynamic timeout
+NOW_EPOCH=$(date +%s)
+TODAY_8PM=$(date -j -v20H -v0M -v0S +%s)
+TIMEOUT_SECS=$((TODAY_8PM - NOW_EPOCH))
+if [[ $TIMEOUT_SECS -le 0 ]]; then
+  echo "Already past 8 PM, exiting"
+  exit 0
+fi
+echo "Starting stream $(date +"%a %x at %r"), timeout in ${TIMEOUT_SECS}s (until 8 PM)"
 
-  # Restart every 12 hours to avoid YouTube's ~24h connection limit
-  # Requires: brew install moreutils (for ts timestamp tool)
-  #
-  # RTSP options explained:
-  #   -rtsp_transport tcp: Use TCP (more reliable than UDP)
-  #   -rtsp_flags prefer_tcp: Prefer TCP for RTP too
-  #   -timeout 5000000: Socket timeout 5s (detect dead connections)
-  #   -reorder_queue_size: Buffer for out-of-order packets
-  #   -thread_queue_size: Input buffer (larger = more tolerance for bursts)
-  #   -max_delay: Allow buffering to smooth out jitter
-  #   -err_detect ignore_err: Continue past decode errors
-  #   -fflags +discardcorrupt: Drop frames that can't be recovered
-  #
-  # Progress file for watchdog stall detection
-  PROGRESS_FILE="/tmp/brookcam_progress"
+# RTSP input: TCP transport, generate clean timestamps, drop corrupt frames
+# Video input: Reolink E1 Pro main stream (h264Preview_01_main)
+# Audio input: Silent generated audio (YouTube requires an audio track)
+# Video encoding: h264_videotoolbox (Apple Silicon), 1440p20, 9Mbps CBR
+# GOP: Keyframe every 2s (YouTube requirement)
+# Audio encoding: AAC stereo 128k
+# Output: FLV over RTMP to YouTube Live
+#
+# Requires: brew install moreutils (for ts timestamp tool)
+#
+# RTSP options explained:
+#   -rtsp_transport tcp: Use TCP (more reliable than UDP)
+#   -rtsp_flags prefer_tcp: Prefer TCP for RTP too
+#   -timeout 5000000: Socket timeout 5s (detect dead connections)
+#   -reorder_queue_size: Buffer for out-of-order packets
+#   -thread_queue_size: Input buffer (larger = more tolerance for bursts)
+#   -max_delay: Allow buffering to smooth out jitter
+#   -err_detect ignore_err: Continue past decode errors
+#   -fflags +discardcorrupt: Drop frames that can't be recovered
+#
+# Progress file for watchdog stall detection
+PROGRESS_FILE="/tmp/brookcam_progress"
 
-  timeout --foreground --signal=SIGINT 43200 ffmpeg \
+timeout --foreground --signal=SIGINT $TIMEOUT_SECS ffmpeg \
     -loglevel info -nostats \
     -rtsp_transport tcp \
     -rtsp_flags prefer_tcp \
@@ -87,4 +100,3 @@ while true; do
     -f flv \
     "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_STREAM_KEY" \
     2>&1 | ts '[%Y-%m-%d %H:%M:%S %Z]'
-done

@@ -55,6 +55,13 @@ last_frame_count=0
 while true; do
   sleep $POLL_INTERVAL
 
+  # Hour gate: exit at 8 PM, launchd restarts at 6 AM
+  HOUR=$(date +%-H)
+  if [[ $HOUR -ge 20 ]]; then
+    echo "Reached 8 PM, watchdog exiting"
+    exit 0
+  fi
+
   now=$(date +%s)
   progress_mtime=$(get_progress_mtime)
   current_frame_count=$(get_frame_count)
