@@ -4,7 +4,7 @@
 # Secrets are stored in environment variables (not github)
 # CAMERA_USER, CAMERA_PASSWORD, CAMERA_IP, YOUTUBE_STREAM_KEY
 
-ENV_PATH="./brookcam.env"
+ENV_PATH="/Users/gm/brookcam/brookcam.env"
 if [[ ! -f "$ENV_PATH" ]]; then
   echo "env file not found"
   exit 1
