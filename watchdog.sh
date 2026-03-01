@@ -1,8 +1,11 @@
-#!/bin/sh
+#!/bin/bash
 # Watchdog with proactive stall detection
 # Monitors ffmpeg progress file to detect stalls BEFORE YouTube notices
 
-ENV_PATH="./brookcam.env"
+# Ensure Homebrew tools (yt-dlp, curl) are on PATH for LaunchDaemons
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+
+ENV_PATH="/Users/gm/brookcam/brookcam.env"
 if [[ ! -f "$ENV_PATH" ]]; then
   echo "env file not found"
   exit 1

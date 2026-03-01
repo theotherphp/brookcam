@@ -25,6 +25,12 @@
 		<integer>1</integer>
 	</dict>
 
+	<key>KeepAlive</key>
+	<dict>
+		<key>SuccessfulExit</key>
+		<false/>
+	</dict>
+
 	<key>StandardOutPath</key>
 	<string>/tmp/brookcam-watchdog.log</string>
 

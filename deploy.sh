@@ -21,9 +21,9 @@ echo "Deploying brookcam from $REPO_DIR"
 # Pull latest (as the owning user, not root)
 sudo -u gm git -C "$REPO_DIR" pull
 
-# Unload existing daemons (ignore errors if not loaded)
-launchctl unload "$LAUNCH_DAEMONS_DIR/$STREAM_PLIST" 2>/dev/null || true
-launchctl unload "$LAUNCH_DAEMONS_DIR/$WATCHDOG_PLIST" 2>/dev/null || true
+# Remove existing daemons (ignore errors if not loaded)
+launchctl bootout system/"com.brookcam.stream" 2>/dev/null || true
+launchctl bootout system/"com.brookcam.watchdog" 2>/dev/null || true
 
 # Kill any running ffmpeg from previous brookcam runs
 pkill -x ffmpeg 2>/dev/null || true
@@ -39,11 +39,11 @@ chown root:wheel "$LAUNCH_DAEMONS_DIR/$STREAM_PLIST" "$LAUNCH_DAEMONS_DIR/$WATCH
 chmod 644 "$LAUNCH_DAEMONS_DIR/$STREAM_PLIST" "$LAUNCH_DAEMONS_DIR/$WATCHDOG_PLIST"
 
 # Load daemons
-launchctl load "$LAUNCH_DAEMONS_DIR/$STREAM_PLIST"
-launchctl load "$LAUNCH_DAEMONS_DIR/$WATCHDOG_PLIST"
+launchctl bootstrap system/ "$LAUNCH_DAEMONS_DIR/$STREAM_PLIST"
+launchctl bootstrap system/ "$LAUNCH_DAEMONS_DIR/$WATCHDOG_PLIST"
 
 echo "Daemons loaded. Starting stream now..."
-launchctl start com.brookcam.stream
+launchctl kickstart system/com.brookcam.stream
 
 echo ""
 echo "Done. Check status with:"
