@@ -2,7 +2,7 @@
 # Watchdog with proactive stall detection
 # Monitors ffmpeg progress file to detect stalls BEFORE YouTube notices
 
-# Ensure Homebrew tools (yt-dlp, curl) are on PATH for LaunchDaemons
+# Ensure Homebrew tools (yt-dlp, curl) are on PATH
 export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 
 ENV_PATH="/Users/gm/brookcam/brookcam.env"
@@ -58,7 +58,7 @@ last_frame_count=0
 while true; do
   sleep $POLL_INTERVAL
 
-  # Hour gate: exit at 8 PM, launchd restarts at 6 AM
+  # Hour gate: exit at 8 PM, run.sh restarts at 6 AM
   HOUR=$(date +%-H)
   if [[ $HOUR -ge 20 ]]; then
     echo "Reached 8 PM, watchdog exiting"

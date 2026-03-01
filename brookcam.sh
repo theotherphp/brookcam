@@ -1,7 +1,7 @@
 #!/bin/bash
 # Shell script to upload from Reolink E1 Pro to YouTube Live
 
-# Ensure Homebrew tools (ffmpeg, timeout, ts) are on PATH for LaunchDaemons
+# Ensure Homebrew tools (ffmpeg, timeout, ts) are on PATH
 export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 
 # Secrets are stored in environment variables (not github)
