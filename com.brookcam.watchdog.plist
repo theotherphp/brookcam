@@ -5,9 +5,6 @@
 	<key>Label</key>
 	<string>com.brookcam.watchdog</string>
 
-	<key>UserName</key>
-	<string>gm</string>
-
 	<key>ProgramArguments</key>
 	<array>
 		<string>/bin/bash</string>
