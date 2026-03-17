@@ -120,7 +120,8 @@ BROADCAST_RESPONSE=$(curl -s -X POST "$API_BASE/liveBroadcasts?part=snippet,cont
   },
   "status": {
     "privacyStatus": "$PRIVACY",
-    "selfDeclaredMadeForKids": false
+    "selfDeclaredMadeForKids": false,
+    "embeddable": true
   }
 }
 EOF
