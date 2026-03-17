@@ -13,9 +13,9 @@ Powers the livestream of video at my tennis club
 
 1. The club has a Google workspace and we created a YouTube channel and stream key
 1. v1.0 used a manually-created (via the Go Live button) livestream.
-1. v2.0 uses a scheduled livestream with autostart and autostop for less manual intervention
+1. v2.0 uses a manually-created scheduled livestream with autostart and autostop for less manual intervention.
+1. v3.0 uses the YouTube Data API v3 to automatically create a fresh broadcast each morning. This fixes the "preparing stream" issue that occurred when YouTube's Go Live session got stuck after the overnight gap. See [SETUP.md](SETUP.md) for API configuration.
 1. We disabled DVR recording, and enabled embedding since the video is enabled on the club web page.
-1. It should not be necessary to stop the livestream from YouTube. If you do that, you may need to create a new scheduled livestream.
 
 ## Brookcam uploader
 
@@ -42,4 +42,5 @@ Powers the livestream of video at my tennis club
 ## Version history
 
 1. v1.0 tried to keep the livestream up 24/7 but network issues at the club made that problematic. The brookcam and watchdog scripts were run manually in Terminal, in the login session for the gm user
-1. v2.0 is using launchd and a scheduled YouTube livestream to automatically start and stop the livestream. That way we can see court conditions during the daytime but skip the difficulties of keeping the stream up 24/7. 
+1. v2.0 uses launchd and a manually-created scheduled YouTube livestream to automatically start and stop the livestream. That way we can see court conditions during the daytime but skip the difficulties of keeping the stream up 24/7.
+1. v3.0 uses the YouTube Data API v3 to create a fresh broadcast each morning automatically, eliminating the "preparing stream" problem that occurred when resuming after the overnight gap.

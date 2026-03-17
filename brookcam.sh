@@ -1,35 +1,14 @@
 #!/bin/bash
 # Shell script to upload from Reolink E1 Pro to YouTube Live
 
-# Ensure Homebrew tools (ffmpeg, timeout, ts) are on PATH
-export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
-
-# Secrets are stored in environment variables (not github)
-# CAMERA_USER, CAMERA_PASSWORD, CAMERA_IP, YOUTUBE_STREAM_KEY
-
-ENV_PATH="/Users/gm/brookcam/brookcam.env"
+ENV_PATH=~/brookcam/brookcam.env
 if [[ ! -f "$ENV_PATH" ]]; then
   echo "env file not found"
   exit 1
 fi
 source $ENV_PATH
 
-# Hour gate: only run 6 AM - 8 PM, exit 0 outside so launchd won't restart
-HOUR=$(date +%-H)
-if [[ $HOUR -ge 20 || $HOUR -lt 6 ]]; then
-  echo "Outside operating hours (hour=$HOUR), exiting"
-  exit 0
-fi
-
-# Calculate seconds until 8 PM for dynamic timeout
-NOW_EPOCH=$(date +%s)
-TODAY_8PM=$(date -j -v20H -v0M -v0S +%s)
-TIMEOUT_SECS=$((TODAY_8PM - NOW_EPOCH))
-if [[ $TIMEOUT_SECS -le 0 ]]; then
-  echo "Already past 8 PM, exiting"
-  exit 0
-fi
-echo "Starting stream $(date +"%a %x at %r"), timeout in ${TIMEOUT_SECS}s (until 8 PM)"
+echo "Starting stream $(date +"%a %x at %r")"
 
 # RTSP input: TCP transport, generate clean timestamps, drop corrupt frames
 # Video input: Reolink E1 Pro main stream (h264Preview_01_main)
@@ -51,10 +30,7 @@ echo "Starting stream $(date +"%a %x at %r"), timeout in ${TIMEOUT_SECS}s (until
 #   -err_detect ignore_err: Continue past decode errors
 #   -fflags +discardcorrupt: Drop frames that can't be recovered
 #
-# Progress file for watchdog stall detection
-PROGRESS_FILE="/tmp/brookcam_progress"
-
-timeout --foreground --signal=SIGINT $TIMEOUT_SECS ffmpeg \
+ffmpeg \
     -loglevel info -nostats \
     -rtsp_transport tcp \
     -rtsp_flags prefer_tcp \
@@ -99,7 +75,6 @@ timeout --foreground --signal=SIGINT $TIMEOUT_SECS ffmpeg \
     -ac 2 \
     -af aresample=async=1 \
     \
-    -progress "$PROGRESS_FILE" \
     -f flv \
     "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_STREAM_KEY" \
     2>&1 | ts '[%Y-%m-%d %H:%M:%S %Z]'
