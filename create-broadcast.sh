@@ -116,8 +116,7 @@ BROADCAST_RESPONSE=$(curl -s -X POST "$API_BASE/liveBroadcasts?part=snippet,cont
   "contentDetails": {
     "enableAutoStart": true,
     "enableAutoStop": true,
-    "enableDvr": false,
-    "enableEmbed": true
+    "enableDvr": false
   },
   "status": {
     "privacyStatus": "$PRIVACY",
