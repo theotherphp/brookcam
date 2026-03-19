@@ -1,6 +1,6 @@
 # YouTube API Setup Guide
 
-One-time setup to enable automatic daily broadcast creation.
+One-time setup to enable create-broadcast.sh.
 
 ## 1. Create a Google Cloud Project
 

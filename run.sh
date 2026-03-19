@@ -4,12 +4,12 @@
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 while true; do
-  echo "$(date): Creating broadcast..."
+  echo "Creating broadcast..."
   if bash "$SCRIPT_DIR/create-broadcast.sh"; then
-    echo "$(date): Broadcast ready, waiting 5s for YouTube to process..."
+    echo "Broadcast ready, waiting 5s for YouTube to process..."
     sleep 5
   else
-    echo "$(date): WARNING: Broadcast creation failed, continuing anyway"
+    echo "WARNING: Broadcast creation failed, continuing anyway"
   fi
 
   start=$(date +%s)
@@ -17,10 +17,10 @@ while true; do
   elapsed=$(( $(date +%s) - start ))
 
   if [[ $elapsed -lt 30 ]]; then
-    echo "$(date): Stream exited after ${elapsed}s (camera down?), retrying in 5m..."
+    echo "Stream exited after ${elapsed}s (camera down?), retrying in 5m..."
     sleep 300
   else
-    echo "$(date): Stream exited after ${elapsed}s, restarting in 30s..."
+    echo "Stream exited after ${elapsed}s, restarting in 30s..."
     sleep 30
   fi
-done
+done 2>&1 | ts '[%Y-%m-%d %H:%M:%S %Z]'

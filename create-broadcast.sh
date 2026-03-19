@@ -11,12 +11,12 @@
 
 set -euo pipefail
 
-export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+echots() { echo "$*" | ts '[%Y-%m-%d %H:%M:%S %Z]'; }
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ENV_PATH=~/brookcam/brookcam.env
 if [[ ! -f "$ENV_PATH" ]]; then
-  echo "env file not found: $ENV_PATH"
+  echots "env file not found: $ENV_PATH"
   exit 1
 fi
 source "$ENV_PATH"
@@ -28,7 +28,7 @@ PRIVACY="${YOUTUBE_BROADCAST_PRIVACY:-public}"
 
 # --- Refresh access token ---
 
-echo "Refreshing access token..."
+echots "Refreshing access token..."
 
 TOKEN_RESPONSE=$(curl -s -X POST "https://oauth2.googleapis.com/token" \
   -d "client_id=$YOUTUBE_CLIENT_ID" \
@@ -39,8 +39,8 @@ TOKEN_RESPONSE=$(curl -s -X POST "https://oauth2.googleapis.com/token" \
 ACCESS_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.access_token // empty')
 
 if [[ -z "$ACCESS_TOKEN" ]]; then
-  echo "Error: Failed to refresh access token."
-  echo "Response: $TOKEN_RESPONSE"
+  echots "Error: Failed to refresh access token."
+  echots "Response: $TOKEN_RESPONSE"
   exit 1
 fi
 
@@ -48,7 +48,7 @@ auth_header="Authorization: Bearer $ACCESS_TOKEN"
 
 # --- Check for existing broadcast today ---
 
-echo "Checking for existing broadcast: $BROADCAST_TITLE"
+echots "Checking for existing broadcast: $BROADCAST_TITLE"
 
 # Check both upcoming and active broadcasts
 for STATUS in upcoming active; do
@@ -63,15 +63,15 @@ for STATUS in upcoming active; do
     '.items[]? | select(.snippet.title == $title) | .id' | head -1)
 
   if [[ -n "$MATCH" ]]; then
-    echo "Broadcast already exists ($STATUS): $MATCH"
-    echo "Skipping creation."
+    echots "Broadcast already exists ($STATUS): $MATCH"
+    echots "Skipping creation."
     exit 0
   fi
 done
 
 # --- Get the persistent stream ID ---
 
-echo "Looking up stream..."
+echots "Looking up stream..."
 
 STREAMS_RESPONSE=$(curl -s -G "$API_BASE/liveStreams" \
   -H "$auth_header" \
@@ -90,19 +90,19 @@ if [[ -z "$STREAM_ID" ]]; then
 fi
 
 if [[ -z "$STREAM_ID" ]]; then
-  echo "Error: No live streams found on this channel."
-  echo "Create a stream in YouTube Studio first, or check your credentials."
+  echots "Error: No live streams found on this channel."
+  echots "Create a stream in YouTube Studio first, or check your credentials."
   exit 1
 fi
 
-echo "Using stream: $STREAM_ID"
+echots "Using stream: $STREAM_ID"
 
 # --- Create broadcast ---
 
 # Schedule start a few minutes from now (YouTube requires a future time)
 SCHEDULED_START=$(date -u -v+2M +"%Y-%m-%dT%H:%M:%SZ")
 
-echo "Creating broadcast: $BROADCAST_TITLE"
+echots "Creating broadcast: $BROADCAST_TITLE"
 
 BROADCAST_RESPONSE=$(curl -s -X POST "$API_BASE/liveBroadcasts?part=snippet,contentDetails,status" \
   -H "$auth_header" \
@@ -130,16 +130,16 @@ EOF
 BROADCAST_ID=$(echo "$BROADCAST_RESPONSE" | jq -r '.id // empty')
 
 if [[ -z "$BROADCAST_ID" ]]; then
-  echo "Error: Failed to create broadcast."
-  echo "Response: $BROADCAST_RESPONSE"
+  echots "Error: Failed to create broadcast."
+  echots "Response: $BROADCAST_RESPONSE"
   exit 1
 fi
 
-echo "Created broadcast: $BROADCAST_ID"
+echots "Created broadcast: $BROADCAST_ID"
 
 # --- Bind broadcast to stream ---
 
-echo "Binding broadcast to stream..."
+echots "Binding broadcast to stream..."
 
 BIND_RESPONSE=$(curl -s -X POST \
   "$API_BASE/liveBroadcasts/bind?id=$BROADCAST_ID&part=id,contentDetails&streamId=$STREAM_ID" \
@@ -149,12 +149,12 @@ BIND_RESPONSE=$(curl -s -X POST \
 BIND_ID=$(echo "$BIND_RESPONSE" | jq -r '.id // empty')
 
 if [[ -z "$BIND_ID" ]]; then
-  echo "Error: Failed to bind broadcast to stream."
-  echo "Response: $BIND_RESPONSE"
+  echots "Error: Failed to bind broadcast to stream."
+  echots "Response: $BIND_RESPONSE"
   exit 1
 fi
 
-echo "Broadcast $BROADCAST_ID bound to stream $STREAM_ID"
-echo "Title: $BROADCAST_TITLE"
-echo "Privacy: $PRIVACY"
-echo "AutoStart: enabled — YouTube will go live when it detects RTMP input."
+echots "Broadcast $BROADCAST_ID bound to stream $STREAM_ID"
+echots "Title: $BROADCAST_TITLE"
+echots "Privacy: $PRIVACY"
+echots "AutoStart: enabled — YouTube will go live when it detects RTMP input."

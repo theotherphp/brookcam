@@ -21,14 +21,21 @@ check_live() {
     "https://www.youtube.com/embed/live_stream?channel=$YOUTUBE_CHANNEL_ID" 2>/dev/null
 }
 
-echo "Watchdog started $(date +"%a %x at %r")"
+consecutive_failures=0
+
+echo "Watchdog started"
 
 while true; do
   sleep 60
 
   if [[ "$(check_live)" != "True" ]]; then
-    echo "$(date): Stream down per YouTube, restarting ffmpeg"
-    notify "Brookcam: stream down, restarting"
+    consecutive_failures=$(( consecutive_failures + 1 ))
+    echo "Stream down per YouTube (failure $consecutive_failures), restarting ffmpeg"
+    if [[ $consecutive_failures -ge 3 ]]; then
+      notify "Brookcam: stream down $consecutive_failures checks in a row, restarting"
+    fi
     pkill -x ffmpeg
+  else
+    consecutive_failures=0
   fi
-done
+done 2>&1 | ts '[%Y-%m-%d %H:%M:%S %Z]'

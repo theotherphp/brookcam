@@ -8,7 +8,7 @@ if [[ ! -f "$ENV_PATH" ]]; then
 fi
 source $ENV_PATH
 
-echo "Starting stream $(date +"%a %x at %r")"
+echo "Starting video upload" | ts '[%Y-%m-%d %H:%M:%S %Z]'
 
 # RTSP input: TCP transport, generate clean timestamps, drop corrupt frames
 # Video input: Reolink E1 Pro main stream (h264Preview_01_main)
@@ -31,7 +31,7 @@ echo "Starting stream $(date +"%a %x at %r")"
 #   -fflags +discardcorrupt: Drop frames that can't be recovered
 #
 ffmpeg \
-    -loglevel info -nostats \
+    -loglevel warning -nostats -hide_banner \
     -rtsp_transport tcp \
     -rtsp_flags prefer_tcp \
     -timeout 5000000 \
