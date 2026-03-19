@@ -3,13 +3,15 @@
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+echots() { echo "$*" | ts '[%Y-%m-%d %H:%M:%S %Z]'; }
+
 while true; do
-  echo "Creating broadcast..."
+  echots "Creating broadcast..."
   if bash "$SCRIPT_DIR/create-broadcast.sh"; then
-    echo "Broadcast ready, waiting 5s for YouTube to process..."
+    echots "Broadcast ready, waiting 5s for YouTube to process..."
     sleep 5
   else
-    echo "WARNING: Broadcast creation failed, continuing anyway"
+    echots "WARNING: Broadcast creation failed, continuing anyway"
   fi
 
   start=$(date +%s)
@@ -17,10 +19,10 @@ while true; do
   elapsed=$(( $(date +%s) - start ))
 
   if [[ $elapsed -lt 30 ]]; then
-    echo "Stream exited after ${elapsed}s (camera down?), retrying in 5m..."
+    echots "Stream exited after ${elapsed}s (camera down?), retrying in 5m..."
     sleep 300
   else
-    echo "Stream exited after ${elapsed}s, restarting in 30s..."
+    echots "Stream exited after ${elapsed}s, restarting in 30s..."
     sleep 30
   fi
-done 2>&1 | ts '[%Y-%m-%d %H:%M:%S %Z]'
+done

@@ -8,6 +8,8 @@ if [[ ! -f "$ENV_PATH" ]]; then
 fi
 source "$ENV_PATH"
 
+echots() { echo "$*" | ts '[%Y-%m-%d %H:%M:%S %Z]'; }
+
 notify() {
   curl -s \
     --form-string "token=$PUSHOVER_APP_TOKEN" \
@@ -23,14 +25,14 @@ check_live() {
 
 consecutive_failures=0
 
-echo "Watchdog started"
+echots "Watchdog started"
 
 while true; do
   sleep 60
 
   if [[ "$(check_live)" != "True" ]]; then
     consecutive_failures=$(( consecutive_failures + 1 ))
-    echo "Stream down per YouTube (failure $consecutive_failures), restarting ffmpeg"
+    echots "Stream down per YouTube (failure $consecutive_failures), restarting ffmpeg"
     if [[ $consecutive_failures -ge 3 ]]; then
       notify "Brookcam: stream down $consecutive_failures checks in a row, restarting"
     fi
@@ -38,4 +40,4 @@ while true; do
   else
     consecutive_failures=0
   fi
-done 2>&1 | ts '[%Y-%m-%d %H:%M:%S %Z]'
+done
