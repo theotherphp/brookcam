@@ -19,7 +19,7 @@ while true; do
   elapsed=$(( $(date +%s) - start ))
 
   if [[ $elapsed -lt 30 ]]; then
-    echots "Stream exited after ${elapsed}s (camera down?), retrying in 5m..."
+    echots "Stream exited after ${elapsed}s (network or camera issue?), retrying in 5m..."
     sleep 300
   else
     echots "Stream exited after ${elapsed}s, restarting in 30s..."
