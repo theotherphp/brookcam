@@ -50,24 +50,38 @@ auth_header="Authorization: Bearer $ACCESS_TOKEN"
 
 echots "Checking for existing broadcast: $BROADCAST_TITLE"
 
-# Check both upcoming and active broadcasts
-for STATUS in upcoming active; do
-  EXISTING=$(curl -s -G "$API_BASE/liveBroadcasts" \
-    -H "$auth_header" \
-    --data-urlencode "part=snippet" \
-    --data-urlencode "broadcastStatus=$STATUS" \
-    --data-urlencode "maxResults=50")
+# If already active, nothing to do
+EXISTING=$(curl -s -G "$API_BASE/liveBroadcasts" \
+  -H "$auth_header" \
+  --data-urlencode "part=snippet" \
+  --data-urlencode "broadcastStatus=active" \
+  --data-urlencode "maxResults=50")
 
-  MATCH=$(echo "$EXISTING" | jq -r \
-    --arg title "$BROADCAST_TITLE" \
-    '.items[]? | select(.snippet.title == $title) | .id' | head -1)
+MATCH=$(echo "$EXISTING" | jq -r \
+  --arg title "$BROADCAST_TITLE" \
+  '.items[]? | select(.snippet.title == $title) | .id' | head -1)
 
-  if [[ -n "$MATCH" ]]; then
-    echots "Broadcast already exists ($STATUS): $MATCH"
-    echots "Skipping creation."
-    exit 0
-  fi
-done
+if [[ -n "$MATCH" ]]; then
+  echots "Broadcast already active: $MATCH, skipping creation."
+  exit 0
+fi
+
+# If stuck in upcoming, delete it so we can create a fresh one
+EXISTING=$(curl -s -G "$API_BASE/liveBroadcasts" \
+  -H "$auth_header" \
+  --data-urlencode "part=snippet" \
+  --data-urlencode "broadcastStatus=upcoming" \
+  --data-urlencode "maxResults=50")
+
+MATCH=$(echo "$EXISTING" | jq -r \
+  --arg title "$BROADCAST_TITLE" \
+  '.items[]? | select(.snippet.title == $title) | .id' | head -1)
+
+if [[ -n "$MATCH" ]]; then
+  echots "Broadcast stuck in upcoming ($MATCH), deleting and recreating..."
+  curl -s -X DELETE "$API_BASE/liveBroadcasts?id=$MATCH" \
+    -H "$auth_header" > /dev/null
+fi
 
 # --- Get the persistent stream ID ---
 
