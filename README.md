@@ -24,16 +24,12 @@ Powers the livestream of video at my tennis club
 
 ## Availability
 
-1. The uploader is launched by MacOS `launchd`. The brookcam plist tells launchd to launch the uploader at 6 AM. 
-1. The watchdog script watches for stalls or failures and kills the brookcam uploader
-1. The plist file is a `LaunchDaemon` so it launches when the machine powers on even before a user logs in. This should be resilient against power outages. The Mac mini is configured to boot after a power outage.
-1. The deploy script puts the plist files where they need to go, and should be run with every `git pull` on the Mac mini.
-1. The brookcam script exits at 8 PM and `launchd` starts it again at 6 AM. 
+1. We keep the livestream up 24/7 using the YouTube Data API to create a new livestream when needed.
 
 ## Remote monitoring
 
 1. The Mac mini is on a [Tailscale](https://tailscale.com/) VPN that I set up for remote management
-1. The watchdog script uses [Pushover](https://pushover.net/) to send alerts to my phone when the livestream is down.
+1. The watchdog script uses [Pushover](https://pushover.net/) to send alerts to my phone when the livestream has been down for three checks.
 
 ## Security
 
