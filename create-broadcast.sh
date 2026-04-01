@@ -50,19 +50,20 @@ auth_header="Authorization: Bearer $ACCESS_TOKEN"
 
 echots "Checking for existing broadcast: $BROADCAST_TITLE"
 
-# If already active, nothing to do
+# If any broadcast is already active on this channel, reconnecting ffmpeg to
+# the same stream key is sufficient — creating a new broadcast would compete
+# with the existing live video and cause "video unavailable" for viewers.
 EXISTING=$(curl -s -G "$API_BASE/liveBroadcasts" \
   -H "$auth_header" \
   --data-urlencode "part=snippet" \
   --data-urlencode "broadcastStatus=active" \
   --data-urlencode "maxResults=50")
 
-MATCH=$(echo "$EXISTING" | jq -r \
-  --arg title "$BROADCAST_TITLE" \
-  '.items[]? | select(.snippet.title == $title) | .id' | head -1)
+ACTIVE_ID=$(echo "$EXISTING" | jq -r '.items[0].id // empty')
+ACTIVE_TITLE=$(echo "$EXISTING" | jq -r '.items[0].snippet.title // empty')
 
-if [[ -n "$MATCH" ]]; then
-  echots "Broadcast already active: $MATCH, skipping creation."
+if [[ -n "$ACTIVE_ID" ]]; then
+  echots "Broadcast already active: $ACTIVE_ID ($ACTIVE_TITLE), skipping creation."
   exit 0
 fi
 
