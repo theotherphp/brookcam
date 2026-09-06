@@ -80,14 +80,17 @@ else
 fi
 echo "internet: $internet"
 
-# 2. Plain TCP to the camera's RTSP port. This IS a local address, so it is
-#    exactly what Local Network privacy gates.
+# 2. Plain TCP to the camera's RTSP port, using nc. Note that nc is an
+#    Apple-signed system binary and ffmpeg is not, and Local Network
+#    permission is granted per binary — so nc succeeding says the camera is
+#    up and routable, but says NOTHING about whether ffmpeg is allowed to
+#    talk to it. That difference is the whole diagnosis below.
 if nc -z -G 4 -w 4 "$CAMERA_IP" 554 2> /dev/null; then
   lan=ok
 else
   lan=fail
 fi
-echo "lan tcp : $lan"
+echo "lan (nc): $lan"
 
 # 3. The real thing.
 probe_out=$(ffprobe -v error -rtsp_transport tcp -timeout 8000000 \
@@ -102,23 +105,41 @@ fi
 echo
 
 echo "=== diagnosis ==="
+
+# macOS does not report a blocked local-network connection as a permission
+# error. It synthesises EHOSTUNREACH / ENETUNREACH instead, so a denied
+# ffmpeg looks exactly like a unplugged camera.
+blocked_signature='No route to host|Network is unreachable|Host is down'
+
 if [[ $probe_rc -eq 0 ]]; then
   echo "Camera opens fine from this context."
   echo "$probe_out" | sed 's/^/  /'
-elif [[ "$internet" == ok && "$lan" == fail ]]; then
-  echo "The internet is reachable but the camera is not."
+elif [[ "$lan" == ok ]] && echo "$probe_out" | grep -qE "$blocked_signature"; then
+  echo "BLOCKED BY LOCAL NETWORK PRIVACY."
   echo
-  echo "That split is the signature of macOS Local Network privacy: outbound"
-  echo "connections to the internet are ungated, connections to the LAN are not."
-  echo "It is also what a powered-off camera or a wrong CAMERA_IP looks like,"
-  echo "so confirm by running this same script directly in a GUI Terminal:"
-  echo "  - works in Terminal, fails as agent -> permission problem"
+  echo "nc reached $CAMERA_IP:554, so the camera is up and routable. ffmpeg,"
+  echo "from this same context, was told 'no route to host'. Both cannot be"
+  echo "true of the network — so this is macOS denying ffmpeg specifically."
+  echo "nc is an Apple-signed system binary; Homebrew ffmpeg is not, and the"
+  echo "permission is granted per binary."
+  echo
+  echo "Fix: System Settings > Privacy & Security > Local Network, enable the"
+  echo "entry for ffmpeg (it appears only after a denial like this one), then"
+  echo "  launchctl kickstart -k gui/\$(id -u)/com.brookcam.stream"
+  echo "If no entry appears, use the Terminal route — see SETUP.md."
+  echo
+  echo "$probe_out" | sed 's/^/  /'
+elif [[ "$internet" == ok && "$lan" == fail ]]; then
+  echo "The internet is reachable but the camera is not, and nc cannot reach it"
+  echo "either. Most likely the camera is powered off, or CAMERA_IP is wrong."
+  echo "Confirm by running this same script directly in a GUI Terminal:"
+  echo "  - works in Terminal, fails as agent -> permission problem after all"
   echo "  - fails both ways                   -> camera or network problem"
 elif [[ "$internet" == fail ]]; then
   echo "No internet either, so this is a plain network outage, not permissions."
   echo "The club's router does this overnight; run.sh retries every 5 minutes."
-elif [[ "$lan" == ok ]]; then
-  echo "TCP to port 554 succeeds but RTSP does not open, so the network path and"
-  echo "any Local Network permission are fine. Look at credentials or the URL:"
+else
+  echo "TCP to port 554 succeeds and the failure does not look like a privacy"
+  echo "block. Check credentials or the stream path:"
   echo "$probe_out" | sed 's/^/  /'
 fi

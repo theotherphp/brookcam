@@ -188,6 +188,8 @@ Read the two results together:
 | ok | fail | Local Network privacy — continue below |
 | fail | fail | The camera is off, `CAMERA_IP` is wrong, or the network is down |
 
+**A blocked connection does not look like a permission error.** macOS synthesises `No route to host` (`EHOSTUNREACH`) or `Network is unreachable` (`ENETUNREACH`) instead of admitting the denial, so a denied ffmpeg is indistinguishable from an unplugged camera if you only read the ffmpeg log. This is why `check-camera.sh` probes with `nc` as well: `/usr/bin/nc` is an Apple-signed system binary and Homebrew's `ffmpeg` is not, and **the permission is granted per binary**. `nc` reaching the camera while `ffmpeg` gets "no route to host" from the same LaunchAgent at the same moment is proof of a privacy block — both cannot be true of the network at once.
+
 **To grant it:** open System Settings > Privacy & Security > **Local Network** and look for an entry named `ffmpeg`, `bash`, or `com.brookcam.stream`. Enable it, then restart the agent:
 
 ```bash
@@ -208,6 +210,17 @@ Terminal.app has a bundle identifier and already holds the Local Network grant. 
    - `~/brookcam/run.command`
    - `~/brookcam/watchdog.command`
 4. Log out and back in — two Terminal windows should open and start streaming
+
+Checking whether it is actually running: `grep brookcam` will **not** find it. `run.command` execs `./run.sh` with a relative path, and ffmpeg's arguments are the RTSP and RTMP URLs, so neither command line contains the string "brookcam" — the only matches are the `login -pf brookcam` processes behind each Terminal window. Use:
+
+```bash
+pgrep -fl 'run\.sh|watchdog\.sh' ; pgrep -x ffmpeg
+tail -f ~/Library/Logs/brookcam.log
+```
+
+The wrappers tee to `~/Library/Logs/brookcam.log` and `brookcam-watchdog.log`, the same files the launchd agents used, so output is both visible in the windows and greppable afterwards. Each truncates itself past ~50MB.
+
+**Do not run `install-launchd.sh` while the Login Items are in place.** The two mechanisms are alternatives. Both running means two `run.sh` loops competing for one camera and one stream key, which produces exactly the "video unavailable" failure described above.
 
 The trade-off is that you lose launchd's `KeepAlive`, so nothing restarts the script if it is killed outright. In practice `run.sh` and `watchdog.sh` loop forever and only stop if someone closes the window, and the visible Terminal windows are arguably easier to check over Screen Sharing than a log file.
 
