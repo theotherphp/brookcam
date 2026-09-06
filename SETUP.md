@@ -220,11 +220,31 @@ tail -f ~/Library/Logs/brookcam.log
 
 The wrappers tee to `~/Library/Logs/brookcam.log` and `brookcam-watchdog.log`, the same files the launchd agents used, so output is both visible in the windows and greppable afterwards. Each truncates itself past ~50MB.
 
+The wrappers wait for the network before starting. Login Items fire before WiFi/Ethernet is up, and `run.sh` treats a sub-30-second exit as a network problem and sleeps 5 minutes — so without the wait, every reboot cost a five minute outage. The signature of that race in the log is the *token refresh* failing alongside the camera: `googleapis.com` is not a LAN address, so if it fails too, the problem is that the network is not up yet, not Local Network privacy.
+
+Also note that `run.sh` sleeps 5 seconds between creating the broadcast and starting ffmpeg, so "ffmpeg NOT running" in a single `status.sh` sample is not conclusive. Check twice.
+
 **Do not run `install-launchd.sh` while the Login Items are in place.** The two mechanisms are alternatives. Both running means two `run.sh` loops competing for one camera and one stream key, which produces exactly the "video unavailable" failure described above.
 
 The trade-off is that you lose launchd's `KeepAlive`, so nothing restarts the script if it is killed outright. In practice `run.sh` and `watchdog.sh` loop forever and only stop if someone closes the window, and the visible Terminal windows are arguably easier to check over Screen Sharing than a log file.
 
 If the first Terminal launch prompts about allowing access to devices on the local network, say yes. If it was denied at some point, toggle Terminal back on in System Settings > Privacy & Security > Local Network. (`tccutil reset LocalNetwork com.apple.Terminal` is reported to re-trigger the prompt, but the exact service name was not verified here — use the UI if tccutil rejects it.)
+
+### Credentials in logs
+
+ffmpeg echoes the full input URL on every error, so `rtsp://admin:PASSWORD@...` lands in the log on each failed connection, and the output URL carries the YouTube stream key. The `.command` wrappers pipe through a `redact()` filter that rewrites both before anything reaches the screen or the log file. `sed -l` keeps it line-buffered so `tail -f` still works live.
+
+This matters mainly because logs get pasted when asking for help. Old logs written before the filter existed still contain the real values:
+
+```bash
+# scrub in place
+sed -i '' -E 's|(rtsp://[^:/@]+):[^@]+@|\1:REDACTED@|g; s|(rtmp://[^ ]*/live2/)[^ ]*|\1REDACTED|g' \
+  ~/Library/Logs/brookcam*.log
+# or just delete them
+rm ~/Library/Logs/brookcam*.log
+```
+
+The `fail-*.rtf` captures in the repo directory also contain the camera password. They are gitignored, so they never reached GitHub, but they are readable on disk.
 
 ### Verifying
 
