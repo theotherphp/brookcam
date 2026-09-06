@@ -170,28 +170,48 @@ To go back to running by hand: `./install-launchd.sh uninstall`.
 
 ### 4. Local Network permission is granted to the launchd job
 
-This is the step that failed the first time. Since macOS Sequoia, a process needs explicit permission to reach devices on the local network, and the permission is attributed to the *responsible process*. When you start the stream from Terminal, Terminal.app is responsible and already has the grant. Under launchd, the binary itself is responsible and starts with no grant, so the RTSP connection to the camera times out with no obvious explanation.
+This is the step that failed in March, and it is the one that is genuinely awkward. Since macOS Sequoia a process needs permission to reach devices on the local network, and the permission is attributed to the **responsible process**. Start the stream from Terminal and Terminal.app is responsible — it already has the grant, which is why running by hand works. Under launchd the binary itself is responsible and starts with no grant, so the RTSP connection times out with nothing in the log to explain it.
 
-After installing the agents, watch the log:
+**First, confirm that permissions are actually the problem.** Run the diagnostic both ways, in a GUI Terminal via Screen Sharing (not over ssh — an ssh session has its own permission context and will mislead you):
 
 ```bash
-tail -f ~/Library/Logs/brookcam.log
+cd ~/brookcam
+./check-camera.sh              # probes the camera from your Terminal
+./check-camera.sh --as-agent   # probes it from a throwaway LaunchAgent
 ```
 
-If ffmpeg cannot open the RTSP URL, open System Settings > Privacy & Security > **Local Network**, enable the entry for `ffmpeg` (it may be listed as `bash` or `com.brookcam.stream`), then restart the agent:
+Read the two results together:
+
+| Terminal | LaunchAgent | Meaning |
+| --- | --- | --- |
+| ok | ok | Permissions are fine; the stream failure is something else |
+| ok | fail | Local Network privacy — continue below |
+| fail | fail | The camera is off, `CAMERA_IP` is wrong, or the network is down |
+
+**To grant it:** open System Settings > Privacy & Security > **Local Network** and look for an entry named `ffmpeg`, `bash`, or `com.brookcam.stream`. Enable it, then restart the agent:
 
 ```bash
 launchctl kickstart -k gui/$(id -u)/com.brookcam.stream
 ```
 
-### Fallback if Local Network cannot be granted
+An entry only appears *after* the process has tried and been denied, so install the agents and let them fail once before looking. There is no command-line way to grant this — `tccutil` only supports `reset SERVICE BUNDLE_ID`, and `ffmpeg` is a bare Unix binary with no bundle identifier. If the entry never shows up, or the toggle does not stick, do not keep fighting it: use the Terminal route below. It is not a hack, it is the same mechanism that already works today.
 
-If the permission entry never appears in System Settings, skip launchd and start the scripts through Terminal.app instead, which inherits the grant that already works:
+### The Terminal route (reliable, and probably what you want)
 
-1. System Settings > General > **Login Items & Extensions**
-2. Under "Open at Login", add `~/brookcam/run.command` and `~/brookcam/watchdog.command`
+Terminal.app has a bundle identifier and already holds the Local Network grant. Launching the scripts through it sidesteps the whole problem.
 
-macOS opens `.command` files in Terminal.app, so this reproduces the environment that works today — just without a human to type the command. Run `./install-launchd.sh uninstall` first so the two mechanisms do not both start ffmpeg.
+**Do not add Terminal.app itself to Login Items** — that just opens an empty window. Add the two `.command` files; macOS opens `.command` documents with Terminal.app, which is the entire point:
+
+1. Run `./install-launchd.sh uninstall` first, so both mechanisms are not starting ffmpeg at once
+2. System Settings > General > **Login Items & Extensions**
+3. Under "Open at Login", click **+** and add:
+   - `~/brookcam/run.command`
+   - `~/brookcam/watchdog.command`
+4. Log out and back in — two Terminal windows should open and start streaming
+
+The trade-off is that you lose launchd's `KeepAlive`, so nothing restarts the script if it is killed outright. In practice `run.sh` and `watchdog.sh` loop forever and only stop if someone closes the window, and the visible Terminal windows are arguably easier to check over Screen Sharing than a log file.
+
+If the first Terminal launch prompts about allowing access to devices on the local network, say yes. If it was denied at some point, toggle Terminal back on in System Settings > Privacy & Security > Local Network. (`tccutil reset LocalNetwork com.apple.Terminal` is reported to re-trigger the prompt, but the exact service name was not verified here — use the UI if tccutil rejects it.)
 
 ### Verifying
 
