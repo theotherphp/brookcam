@@ -1,3 +1,4 @@
 brookcam.env
 client_secret_*.json
 *.rtf
+.DS_Store

@@ -25,6 +25,7 @@ Powers the livestream of video at my tennis club
 ## Availability
 
 1. We keep the livestream up 24/7 using the YouTube Data API to create a new livestream when needed.
+1. The Mac mini restarts on its own after a power cut, auto-logs into the `gm` account, and launchd agents (`install-launchd.sh`) start `run.sh` and `watchdog.sh` — no remote login needed. See [SETUP.md](SETUP.md#surviving-a-reboot).
 
 ## Remote monitoring
 
