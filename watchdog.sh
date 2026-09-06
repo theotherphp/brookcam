@@ -28,7 +28,7 @@ consecutive_failures=0
 echots "Watchdog started"
 
 while true; do
-  sleep 60
+  sleep 300
 
   if [[ "$(check_live)" != "True" ]]; then
     consecutive_failures=$(( consecutive_failures + 1 ))
